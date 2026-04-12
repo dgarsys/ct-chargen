@@ -26,7 +26,6 @@
             - rolld6 : return a random value of 1-6 as if rolled on one die
             - var_echo : a wrapper to dump strings out of a var dump so we can then wrap them in a htmlspecialchars
             - generateUPP : given a charstat subarray, generates a hex-coded Traveller UPP string
-            - myDBConnect : you guessed it
 
 --------------------------------------------------------------------------------
 */
@@ -51,7 +50,7 @@ function var_echo($echoVar) {
 }
 
 
-function maxCharSckills($charStats) {
+function maxCharSkills($charStats) {
         // passing in teh "stats" block of $charSheet
         $maxSkills = $charStats['int']['numeric'] + $charStats['edu']['numeric'];
         return $maxSkills;
@@ -102,7 +101,7 @@ $viewDir = __DIR__ . '/views/';         // Base directory for views
 $apiDir = __DIR__ . '/api/';            // Base directory for api and fragment calls
 $baseDIR = __DIR__;                     // Base directory , period
 
-$secureDir = "../secureconfig/";        // Base directory for things like DB credentials and connection includes
+$secureDir = __DIR__ . '/../secureconfig/';  // Base directory for things like DB credentials and connection includes
 
 
 
@@ -214,5 +213,4 @@ switch (true):
         endswitch;
 
 
-// phpinfo();
 ?>
