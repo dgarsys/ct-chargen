@@ -1,0 +1,8 @@
+# Credentials and local config
+*.ini
+.env
+.env.*
+
+# OS noise
+.DS_Store
+Thumbs.db
