@@ -93,7 +93,7 @@ function generateUPP ( $charStats) {
         Global Defaults for this page and all included pages via router below
 --------------------------------------------------------------------------------
 */
-$baseURL="http://localhost/";           // Needs to be changed if migrating - base URL of app
+$baseURL = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http') . '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost') . '/';
 $baseTitle = "Traveller Dev | ";        // Base Title for tabs
 
 $request = $_SERVER['REQUEST_URI'];     // Getting the request URI and parameters
@@ -141,12 +141,6 @@ switch (true):
                 require $viewDir . "parts/afooter.php";
                 break;
 
-        case preg_match('/home/', $request)  :                          // TEST homepage
-                $pageTitle=$baseTitle."Home - testing";
-                require $viewDir . "parts/aheader.php";
-                require $viewDir . 'hometest.php';
-                require $viewDir . "parts/afooter.php";
-                break;
 
         case  preg_match('/character/', $request)  :                    // character app page
                 $pageTitle=$baseTitle."CT Character Generator";
