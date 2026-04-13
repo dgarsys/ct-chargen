@@ -30,6 +30,28 @@
 --------------------------------------------------------------------------------
 */
 
+function isHtmxRequest() {
+    return isset($_SERVER['HTTP_HX_REQUEST']) && $_SERVER['HTTP_HX_REQUEST'] === 'true';
+}
+
+function charFragmentHeader($pageTitle, $viewDir) {
+    if (!isHtmxRequest()) {
+        require $viewDir . 'parts/aheader.php';
+        echo '<h1>Classic Traveller Character Generator</h1>';
+        echo '<div id="char-container">';
+        echo '<div id="charapp">';
+    }
+}
+
+function charFragmentFooter($viewDir) {
+    if (!isHtmxRequest()) {
+        echo '</div>'; // close #charapp
+        echo '<div id="charlog"></div>';
+        echo '</div>'; // close #char-container
+        require $viewDir . 'parts/afooter.php';
+    }
+}
+
 function eecho($echoString) {
     echo( htmlspecialchars($echoString, ENT_QUOTES, 'UTF-8') );
 }
@@ -52,7 +74,7 @@ function var_echo($echoVar) {
 
 function maxCharSkills($charStats) {
         // passing in teh "stats" block of $charSheet
-        $maxSkills = $charStats['int']['numeric'] + $charStats['edu']['numeric'];
+        $maxSkills = $charStats['int']['num'] + $charStats['edu']['num'];
         return $maxSkills;
 }
 
@@ -112,6 +134,7 @@ $secureDir = __DIR__ . '/../secureconfig/';  // Base directory for things like D
 --------------------------------------------------------------------------------
 */
 require $secureDir."pdoset.php";
+require $baseDIR.'/lib/char_constants.php';
 
 
 
@@ -170,20 +193,32 @@ switch (true):
                 require $apiDir."chargen/02roll.php";
                 break;
 
-        case preg_match('/api\/chargen\/choosecareer/', $request) :     // CHARgen : call stage 3 to choose a career 
+        case preg_match('/api\/chargen\/choosecareer/', $request) :     // CHARgen : call stage 3 to choose a career
+                $pageTitle=$baseTitle."CT Character Generator";
+                charFragmentHeader($pageTitle, $viewDir);
                 require $apiDir."chargen/03choosecareer.php";
+                charFragmentFooter($viewDir);
                 break;
 
         case preg_match('/api\/chargen\/firsttermstart/', $request) :   // CHARgen : call stage 4 - enlistment or drafting
+                $pageTitle=$baseTitle."CT Character Generator";
+                charFragmentHeader($pageTitle, $viewDir);
                 require $apiDir."chargen/04firsttermstart.php";
+                charFragmentFooter($viewDir);
                 break;
 
-        case preg_match('/api\/chargen\/term/', $request) :             // CHARgen : Call term esolution, we will loop through this
+        case preg_match('/api\/chargen\/term/', $request) :             // CHARgen : Call term resolution, we will loop through this
+                $pageTitle=$baseTitle."CT Character Generator";
+                charFragmentHeader($pageTitle, $viewDir);
                 require $apiDir."chargen/05termhandler.php";
+                charFragmentFooter($viewDir);
                 break;
 
-        case preg_match('/api\/chargen\/skillroll/', $request) :             // CHARgen : Call term esolution, we will loop through this
+        case preg_match('/api\/chargen\/skillroll/', $request) :        // CHARgen : Call skill roll
+                $pageTitle=$baseTitle."CT Character Generator";
+                charFragmentHeader($pageTitle, $viewDir);
                 require $apiDir."chargen/06skillroll.php";
+                charFragmentFooter($viewDir);
                 break;
 
 

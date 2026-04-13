@@ -1,8 +1,193 @@
+/* -------------------------------------------------------
+   Base
+------------------------------------------------------- */
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background-color: #000;
+    color: #eeeeee;
+    font-family: 'Open Sans', sans-serif;
+    font-size: 1rem;
+    line-height: 1.6;
+    padding: 0 1.5rem 2rem;
+}
+
+/* -------------------------------------------------------
+   Header / Nav
+------------------------------------------------------- */
+header {
+    padding: 1rem 0 0.5rem;
+    border-bottom: 1px solid #333;
+    margin-bottom: 1.5rem;
+}
+
+header nav {
+    font-family: 'Cinzel', serif;
+    font-size: 1rem;
+    color: #fff;
+}
+
+header nav a {
+    color: #fff;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+header nav a:hover {
+    color: #cc2200;
+    text-decoration: underline;
+}
+
+/* -------------------------------------------------------
+   Typography
+------------------------------------------------------- */
+h1 {
+    font-family: 'Cinzel', serif;
+    font-size: 2rem;
+    font-weight: 700;
+    color: #8b0000;
+    margin-bottom: 1rem;
+}
+
+h2 {
+    font-family: 'Cinzel', serif;
+    font-size: 1.4rem;
+    color: #8b0000;
+    margin: 1.5rem 0 0.75rem;
+}
+
+h3 {
+    font-family: 'Cinzel', serif;
+    font-size: 1.1rem;
+    color: #6e0000;
+    margin: 1rem 0 0.5rem;
+}
+
+p {
+    margin-bottom: 0.75rem;
+}
+
+a {
+    color: #8b0000;
+    text-decoration: none;
+}
+
+a:hover {
+    color: #ff3333;
+    text-decoration: underline;
+}
+
+/* -------------------------------------------------------
+   Tables
+------------------------------------------------------- */
+table {
+    border-collapse: collapse;
+    margin-bottom: 1rem;
+}
+
+table td,
+table th {
+    border: 2px solid #fff;
+    padding: 0.4rem 0.75rem;
+}
+
+table th {
+    font-family: 'Cinzel', serif;
+    color: #8b0000;
+}
+
+td.stat-value {
+    width: 8rem;
+    min-width: 8rem;
+}
+
+/* -------------------------------------------------------
+   Buttons
+------------------------------------------------------- */
+button {
+    background-color: #1a1a1a;
+    color: #eeeeee;
+    border: 1px solid #555;
+    padding: 0.4rem 1rem;
+    font-family: 'Open Sans', sans-serif;
+    font-size: 0.95rem;
+    cursor: pointer;
+    margin-right: 0.5rem;
+    margin-top: 0.75rem;
+}
+
+button:hover {
+    background-color: #8b0000;
+    border-color: #8b0000;
+    color: #fff;
+}
+
+/* -------------------------------------------------------
+   Character App Layout
+------------------------------------------------------- */
+#char-container {
+    display: flex;
+    gap: 1.5rem;
+    align-items: flex-start;
+}
+
+#charapp {
+    flex: 1;
+    min-width: 0;
+}
+
+#charlog {
+    width: 260px;
+    min-width: 220px;
+    flex-shrink: 0;
+    border: 1px solid #333;
+    padding: 1rem;
+    font-size: 0.85rem;
+    line-height: 1.5;
+}
+
+#charlog h3 {
+    margin-top: 0;
+    font-size: 0.95rem;
+    border-bottom: 1px solid #333;
+    padding-bottom: 0.4rem;
+    margin-bottom: 0.5rem;
+}
+
+#charlog .log-entries {
+    margin-top: 0.75rem;
+    border-top: 1px solid #333;
+    padding-top: 0.5rem;
+    font-size: 0.8rem;
+    color: #aaa;
+}
+
+.clearfloat {
+    clear: both;
+}
+
+/* -------------------------------------------------------
+   Footer
+------------------------------------------------------- */
+footer {
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid #333;
+    font-size: 0.85rem;
+    color: #555;
+}
+
+/* -------------------------------------------------------
+   Diagnostics
+------------------------------------------------------- */
 .diagnosticsdiv {
     font-size: x-small;
-    border-style: solid;
-    border-color: black;
-    background-color: cadetblue;
+    border: 1px solid #555;
+    background-color: #1a1a1a;
     padding: 5px;
     margin: 5px;
 }
