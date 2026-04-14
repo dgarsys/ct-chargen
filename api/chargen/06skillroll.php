@@ -1,7 +1,7 @@
 <?php
 
 // -----------------------------------------------------------------------
-// Decode state
+// 1. Decode state
 // -----------------------------------------------------------------------
 $charState      = $_GET['charState']            ?? '';
 $skillRollCount = (int)($_GET['skillRollCount'] ?? 0);
@@ -9,23 +9,30 @@ $termNumber     = (int)($_GET['termNumber']     ?? 1);
 $charData       = $charState ? json_decode(base64_decode($charState), true) : [];
 $serviceId      = (int)($charData['character']['service'] ?? 0);
 
-// Max skills
-$maxSkills         = maxCharSkills($charData['character']['stats']);
+// -----------------------------------------------------------------------
+// 2. Derived values — re-evaluated every request
+// -----------------------------------------------------------------------
+$stats             = $charData['character']['stats'] ?? [];
+$maxSkills         = maxCharSkills($stats);
 $currentSkillCount = isset($charData['character']['skills'])
     ? array_sum($charData['character']['skills']) : 0;
 $atMaxSkills       = ($currentSkillCount >= $maxSkills);
+$eduVal            = $stats['edu']['num'] ?? 0;
 
-// Available tables for this service
+// -----------------------------------------------------------------------
+// 3. Available tables — gated by EDU and at-max
+// -----------------------------------------------------------------------
 $stmtTables = $pdo->prepare(
     'SELECT DISTINCT roll_table FROM service_skills WHERE service = :svc ORDER BY roll_table'
 );
 $stmtTables->execute(['svc' => $serviceId]);
 $availableTables = $stmtTables->fetchAll(PDO::FETCH_COLUMN);
 
-// Gate table 4 on EDU 8+
-$eduVal = $charData['character']['stats']['edu']['num'] ?? 0;
 if ($eduVal < 8) {
-    $availableTables = array_filter($availableTables, fn($t) => $t != 4);
+    $availableTables = array_values(array_filter($availableTables, fn($t) => $t != 4));
+}
+if ($atMaxSkills) {
+    $availableTables = [1];
 }
 
 $tableNames = [
@@ -35,7 +42,43 @@ $tableNames = [
     4 => 'Further Advanced Education',
 ];
 
-// Helper: recursively fetch all leaf skills under a cascade parent
+// -----------------------------------------------------------------------
+// 4. Data fetch — single query, $tableData[roll_table][roll_val] = full row
+// -----------------------------------------------------------------------
+function fetchTableData(PDO $pdo, int $serviceId, array $availableTables): array {
+    if (empty($availableTables)) return [];
+    $placeholders = implode(',', array_fill(0, count($availableTables), '?'));
+    $stmt = $pdo->prepare(
+        "SELECT ss.roll_table, ss.roll_val, ss.skill_type,
+                ss.stat_name, ss.stat_mod, ss.skill_table_id,
+                sl.skill_name
+         FROM service_skills ss
+         LEFT JOIN skills_list sl ON ss.skill_table_id = sl.id
+         WHERE ss.service = ? AND ss.roll_table IN ($placeholders)
+         ORDER BY ss.roll_table, ss.roll_val"
+    );
+    $stmt->execute(array_merge([$serviceId], $availableTables));
+    $data = [];
+    foreach ($stmt->fetchAll() as $row) {
+        $data[(int)$row['roll_table']][(int)$row['roll_val']] = $row;
+    }
+    return $data;
+}
+
+$tableData = fetchTableData($pdo, $serviceId, $availableTables);
+
+// -----------------------------------------------------------------------
+// 5. Helpers
+// -----------------------------------------------------------------------
+function buildDisplayString(array $row): string {
+    if ($row['skill_type'] === 'stat') {
+        $mod  = (int)$row['stat_mod'];
+        $sign = $mod >= 0 ? '+' : '';
+        return $sign . $mod . ' ' . strtoupper($row['stat_name']);
+    }
+    return $row['skill_name'] ?? '?';
+}
+
 function getLeafSkills(PDO $pdo, int $parentId): array {
     $stmt = $pdo->prepare('SELECT * FROM skills_list WHERE cas_parent = :parent');
     $stmt->execute(['parent' => $parentId]);
@@ -52,28 +95,39 @@ function getLeafSkills(PDO $pdo, int $parentId): array {
 }
 
 // -----------------------------------------------------------------------
-// Determine mode
+// 6. Mode detection
 // -----------------------------------------------------------------------
-$mode = 'choose';
-if (isset($_GET['cascadeSkill']))   $mode = 'apply_cascade';
-elseif (isset($_GET['cascadeParent'])) $mode = 'cascade';
+$mode = 'page';
+if (isset($_GET['cascadeSkill']))      $mode = 'apply_cascade';
 elseif (isset($_GET['selectedTable'])) $mode = 'roll';
 
-$resultMessage     = '';
-$cascadeParent     = 0;
-$cascadeParentName = '';
-$rollDetails       = [];
+// Result message — stored in charData['_lastResult'], cleared each request
+$resultMessage = $charData['_lastResult'] ?? '';
+unset($charData['_lastResult']);
 
+// Cascade fragment vars (only set in cascade sub-case of roll mode)
+$cascadeParentId   = 0;
+$cascadeParentName = '';
+$cascadeRoll       = 0;
+$cascadeTableName  = '';
+$cascadeLeaves     = [];
 
 // -----------------------------------------------------------------------
-// Mode: apply_cascade — apply chosen leaf skill, decrement count
+// 7. Mode: apply_cascade
 // -----------------------------------------------------------------------
 if ($mode === 'apply_cascade') {
-    $cascadeSkillId = (int)$_GET['cascadeSkill'];
+    $cascadeSkillId  = (int)$_GET['cascadeSkill'];
+    $rolledTableName = $_GET['rolledTable']  ?? '?';
+    $rolledRoll      = (int)($_GET['rolledRoll']   ?? 0);
+    $rolledParentId  = (int)($_GET['rolledParent'] ?? 0);
 
-    $stmtSkill = $pdo->prepare('SELECT skill_name FROM skills_list WHERE id = :id');
-    $stmtSkill->execute(['id' => $cascadeSkillId]);
-    $skillName = $stmtSkill->fetchColumn() ?: 'Unknown';
+    $stmtLeaf = $pdo->prepare('SELECT skill_name FROM skills_list WHERE id = :id');
+    $stmtLeaf->execute(['id' => $cascadeSkillId]);
+    $leafName = $stmtLeaf->fetchColumn() ?: 'Unknown';
+
+    $stmtParent = $pdo->prepare('SELECT skill_name FROM skills_list WHERE id = :id');
+    $stmtParent->execute(['id' => $rolledParentId]);
+    $parentName = $stmtParent->fetchColumn() ?: 'Unknown';
 
     if (!isset($charData['character']['skills'])) $charData['character']['skills'] = [];
     $charData['character']['skills'][$cascadeSkillId] =
@@ -81,50 +135,55 @@ if ($mode === 'apply_cascade') {
     $level = $charData['character']['skills'][$cascadeSkillId];
 
     $charData['character']['log'][] = [
-        'step'       => 'skill_roll',
-        'term'       => $termNumber,
-        'table'      => $_GET['rolledTable'] ?? '?',
-        'type'       => 'skill',
-        'skill_id'   => $cascadeSkillId,
-        'skill_name' => $skillName,
-        'level'      => $level,
-        'cascade'    => true,
+        'step'           => 'skill_roll',
+        'term'           => $termNumber,
+        'table'          => $rolledTableName,
+        'roll'           => $rolledRoll,
+        'type'           => 'skill',
+        'skill_id'       => $rolledParentId,
+        'skill_name'     => $parentName,
+        'cascade_choice' => $cascadeSkillId,
+        'cascade_name'   => $leafName,
+        'level'          => $level,
+        'cascade'        => true,
     ];
 
-    $resultMessage = "Gained <strong>$skillName-$level</strong>.";
     $skillRollCount--;
-    $mode = 'choose';
+    $charData['_lastResult'] = "Rolled $rolledRoll on $rolledTableName: $parentName &rarr; $leafName-$level.";
+    $resultMessage           = $charData['_lastResult'];
+
+    header('HX-Retarget: #charapp');
+    header('HX-Reswap: innerHTML');
+    $mode = 'page';
 }
 
-
 // -----------------------------------------------------------------------
-// Mode: roll — roll 1d6 on chosen table, process result
+// 8. Mode: roll
 // -----------------------------------------------------------------------
 if ($mode === 'roll') {
     $selectedTable = (int)$_GET['selectedTable'];
     $dieRoll       = rolld6();
     $tableName     = $tableNames[$selectedTable] ?? "Table $selectedTable";
-
-    $stmtResult = $pdo->prepare(
-        'SELECT * FROM service_skills
-         WHERE service = :svc AND roll_table = :table AND roll_val = :val'
-    );
-    $stmtResult->execute(['svc' => $serviceId, 'table' => $selectedTable, 'val' => $dieRoll]);
-    $result = $stmtResult->fetch();
+    $result        = $tableData[$selectedTable][$dieRoll] ?? null;
 
     if (!$result) {
-        $resultMessage = "No result found for table $selectedTable, roll $dieRoll.";
         $skillRollCount--;
-        $mode = 'choose';
+        $charData['_lastResult'] = "No result found for table $selectedTable, roll $dieRoll.";
+        $resultMessage           = $charData['_lastResult'];
+        header('HX-Retarget: #charapp');
+        header('HX-Reswap: innerHTML');
+        $mode = 'page';
 
     } elseif ($result['skill_type'] === 'stat') {
         $statKey     = $result['stat_name'];
-        $charData['character']['stats'][$statKey]['num']++;
+        $statMod     = (int)$result['stat_mod'];
+        $charData['character']['stats'][$statKey]['num'] += $statMod;
         $charData['character']['stats'][$statKey]['hex'] = strtoupper(
             dechex($charData['character']['stats'][$statKey]['num'])
         );
         $newVal      = $charData['character']['stats'][$statKey]['num'];
         $statDisplay = $statDefs[$statKey] ?? strtoupper($statKey);
+        $sign        = $statMod >= 0 ? '+' : '';
 
         $charData['character']['log'][] = [
             'step'    => 'skill_roll',
@@ -136,30 +195,54 @@ if ($mode === 'roll') {
             'new_val' => $newVal,
         ];
 
-        $resultMessage = "Rolled <strong>$dieRoll</strong> on $tableName: "
-            . "<strong>$statDisplay</strong> increased to <strong>$newVal</strong>.";
         $skillRollCount--;
-        $mode = 'choose';
+        $charData['_lastResult'] = "Rolled $dieRoll on $tableName: {$sign}{$statMod} $statDisplay (now $newVal).";
+        $resultMessage           = $charData['_lastResult'];
+        header('HX-Retarget: #charapp');
+        header('HX-Reswap: innerHTML');
+        $mode = 'page';
 
     } elseif ($result['skill_type'] === 'skill') {
-        $skillId = (int)$result['skill_table_id'];
+        $skillId   = (int)$result['skill_table_id'];
+        $skillName = $result['skill_name'] ?? 'Unknown';
 
-        $stmtSkill = $pdo->prepare('SELECT * FROM skills_list WHERE id = :id');
-        $stmtSkill->execute(['id' => $skillId]);
-        $skillRow = $stmtSkill->fetch();
+        $stmtCas = $pdo->prepare('SELECT has_cas_child FROM skills_list WHERE id = :id');
+        $stmtCas->execute(['id' => $skillId]);
+        $hasCascade = (bool)$stmtCas->fetchColumn();
 
-        if ($skillRow['has_cas_child']) {
-            // Cascade — hold count until player chooses sub-skill
-            $mode              = 'cascade';
-            $cascadeParent     = $skillId;
-            $cascadeParentName = $skillRow['skill_name'];
-            $rollDetails       = ['table' => $selectedTable, 'tableName' => $tableName, 'roll' => $dieRoll];
+        if ($hasCascade) {
+            $cascadeParentId   = $skillId;
+            $cascadeParentName = $skillName;
+            $cascadeRoll       = $dieRoll;
+            $cascadeTableName  = $tableName;
+            $cascadeLeaves     = getLeafSkills($pdo, $skillId);
+            $mode              = 'cascade_fragment';
+
+        } elseif ($atMaxSkills) {
+            $charData['character']['log'][] = [
+                'step'       => 'skill_roll',
+                'term'       => $termNumber,
+                'table'      => $tableName,
+                'roll'       => $dieRoll,
+                'type'       => 'skill',
+                'skill_id'   => $skillId,
+                'skill_name' => $skillName,
+                'applied'    => false,
+                'reason'     => 'at_max_skills',
+            ];
+
+            $skillRollCount--;
+            $charData['_lastResult'] = "Rolled $dieRoll on $tableName: $skillName not gained (at skill maximum).";
+            $resultMessage           = $charData['_lastResult'];
+            header('HX-Retarget: #charapp');
+            header('HX-Reswap: innerHTML');
+            $mode = 'page';
+
         } else {
             if (!isset($charData['character']['skills'])) $charData['character']['skills'] = [];
             $charData['character']['skills'][$skillId] =
                 ($charData['character']['skills'][$skillId] ?? 0) + 1;
-            $level     = $charData['character']['skills'][$skillId];
-            $skillName = $skillRow['skill_name'];
+            $level = $charData['character']['skills'][$skillId];
 
             $charData['character']['log'][] = [
                 'step'       => 'skill_roll',
@@ -172,18 +255,43 @@ if ($mode === 'roll') {
                 'level'      => $level,
             ];
 
-            $resultMessage = "Rolled <strong>$dieRoll</strong> on $tableName: "
-                . "gained <strong>$skillName-$level</strong>.";
             $skillRollCount--;
-            $mode = 'choose';
+            $charData['_lastResult'] = "Rolled $dieRoll on $tableName: gained $skillName-$level.";
+            $resultMessage           = $charData['_lastResult'];
+            header('HX-Retarget: #charapp');
+            header('HX-Reswap: innerHTML');
+            $mode = 'page';
         }
     }
 }
 
-// Re-encode updated state
-$newCharState      = base64_encode(json_encode($charData));
-$currentSkillCount = isset($charData['character']['skills'])
-    ? array_sum($charData['character']['skills']) : 0;
+// -----------------------------------------------------------------------
+// 9. Re-encode state + re-evaluate for render
+//    (skip for cascade_fragment — state unchanged, derived values unchanged)
+// -----------------------------------------------------------------------
+$newCharState = base64_encode(json_encode($charData));
+
+if ($mode !== 'cascade_fragment') {
+    $stats             = $charData['character']['stats'] ?? [];
+    $maxSkills         = maxCharSkills($stats);
+    $currentSkillCount = isset($charData['character']['skills'])
+        ? array_sum($charData['character']['skills']) : 0;
+    $atMaxSkills       = ($currentSkillCount >= $maxSkills);
+    $eduVal            = $stats['edu']['num'] ?? 0;
+
+    // Re-gate available tables (stat bump may have changed INT/EDU)
+    $stmtTables->execute(['svc' => $serviceId]);
+    $availableTables = $stmtTables->fetchAll(PDO::FETCH_COLUMN);
+    if ($eduVal < 8) {
+        $availableTables = array_values(array_filter($availableTables, fn($t) => $t != 4));
+    }
+    if ($atMaxSkills) {
+        $availableTables = [1];
+    }
+
+    // Re-fetch display data for the (possibly updated) available tables
+    $tableData = fetchTableData($pdo, $serviceId, $availableTables);
+}
 
 ?>
 
