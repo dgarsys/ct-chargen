@@ -444,8 +444,7 @@ endif;
                         <td>
                             <form hx-get="/api/chargen/skillroll"
                                   hx-target="#roll-result"
-                                  hx-swap="innerHTML"
-                                  hx-push-url="true">
+                                  hx-swap="innerHTML">
                                 <input type="hidden" name="charState"      value="<?= htmlspecialchars($newCharState) ?>" />
                                 <input type="hidden" name="skillRollCount" value="<?= $skillRollCount ?>" />
                                 <input type="hidden" name="termNumber"     value="<?= $termNumber ?>" />
@@ -473,6 +472,8 @@ endif;
     </div><?php // end #skill-tables ?>
 
     <div id="roll-result">
+        <?php // $resultMessage is set by the logic block (trusted HTML with <strong>, &rarr; etc.)
+              // It is never read from $_GET — safe to output unescaped. ?>
         <?php if ($resultMessage): ?>
             <p><?= $resultMessage ?></p>
         <?php endif; ?>
