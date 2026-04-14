@@ -223,9 +223,16 @@ switch (true):
                 charFragmentFooter($viewDir);
                 break;
 
+        case preg_match('/api\/chargen\/reenlist/', $request) :         // CHARgen : Call re-enlistment and aging
+                $pageTitle=$baseTitle."CT Character Generator";
+                charFragmentHeader($pageTitle, $viewDir);
+                require $apiDir."chargen/07reenlist.php";
+                charFragmentFooter($viewDir);
+                break;
 
 
-                
+
+
 
 
 /*
