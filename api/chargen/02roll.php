@@ -1,13 +1,15 @@
 <?php
 
 // Roll 2d6 for each stat and build the stats array
-$stats = [];
+$stats       = [];
+$rollDetails = [];
 foreach (array_keys($statDefs) as $stat) {
     $roll = roll2d6();
     $stats[$stat] = [
-        'num' => $roll,
-        'hex' => strtoupper(dechex($roll)),
+        'num' => $roll['total'],
+        'hex' => strtoupper(dechex($roll['total'])),
     ];
+    $rollDetails[$stat] = $roll;
 }
 
 $upp = generateUPP($stats);
@@ -21,7 +23,10 @@ $charState = base64_encode(json_encode($charData));
     <?php foreach ($statDefs as $key => $fullName): ?>
         <tr>
             <td><?= htmlspecialchars($fullName) ?> (<?= htmlspecialchars(strtoupper($key)) ?>)</td>
-            <td class="stat-value"><?= $stats[$key]['num'] ?> (<?= htmlspecialchars($stats[$key]['hex']) ?>)</td>
+            <td class="stat-value">
+                <?= $stats[$key]['num'] ?> (<?= htmlspecialchars($stats[$key]['hex']) ?>)
+                &nbsp;<small><?= $rollDetails[$key]['die1'] ?>, <?= $rollDetails[$key]['die2'] ?></small>
+            </td>
         </tr>
     <?php endforeach; ?>
     </tbody>
