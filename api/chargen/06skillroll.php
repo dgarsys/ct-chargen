@@ -378,7 +378,7 @@ if ($mode === 'cascade_fragment'):
 </div>
 
 <?php // Charlog OOB ?>
-<div id="charlog" hx-swap-oob="true">
+<div id="charlog" <?= isHtmxRequest() ? 'hx-swap-oob="true"' : '' ?>>
     <?php require $viewDir . 'charapp/charlog.php'; ?>
 </div>
 
