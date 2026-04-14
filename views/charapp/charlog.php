@@ -79,6 +79,7 @@ if (!empty($logSkills)) {
 <div class="log-entries">
     <strong>Event Log</strong><br />
     <?php foreach ($logEntries as $entry): ?>
+
         <?php if ($entry['step'] === 'enlistment'): ?>
             <?php if ($entry['result'] === 'enlisted'): ?>
                 Attempted enlistment in <?= htmlspecialchars($entry['attempted']) ?>
@@ -90,7 +91,36 @@ if (!empty($logSkills)) {
                 Failed. Draft roll <?= $entry['draft_roll'] ?? '?' ?> →
                 <strong>Drafted into <?= htmlspecialchars($entry['active_career']) ?>.</strong><br />
             <?php endif; ?>
+
+        <?php elseif ($entry['step'] === 'aging'): ?>
+            <?php
+                $reducedStats = array_filter($entry['rolls'] ?? [], fn($r) => $r['result'] === 'reduced');
+            ?>
+            <?php if (empty($reducedStats)): ?>
+                Age <?= (int)$entry['age'] ?>: No aging effects.<br />
+            <?php else: ?>
+                Age <?= (int)$entry['age'] ?> aging:
+                <?php foreach ($reducedStats as $ar): ?>
+                    <?= htmlspecialchars(strtoupper($ar['stat'])) ?> reduced to <?= (int)$ar['new_val'] ?>.
+                <?php endforeach; ?><br />
+            <?php endif; ?>
+
+        <?php elseif ($entry['step'] === 'reenlistment'): ?>
+            <?php
+                $reenlistLabels = [
+                    'reenlisted'     => 'Re-enlisted.',
+                    'forced_reenlist'=> 'Forced re-enlistment (rolled 12).',
+                    'mustered_out'   => 'Mustered out.',
+                    'failed_reenlist'=> 'Failed re-enlistment — mustered out.',
+                ];
+                $label = $reenlistLabels[$entry['result']] ?? htmlspecialchars($entry['result']);
+            ?>
+            Term <?= (int)$entry['term'] ?> re-enlistment
+            (rolled <?= (int)$entry['total'] ?>, target <?= (int)$entry['target'] ?>+):
+            <strong><?= $label ?></strong><br />
+
         <?php endif; ?>
+
     <?php endforeach; ?>
 </div>
 <?php endif; ?>
