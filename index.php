@@ -56,8 +56,10 @@ function eecho($echoString) {
     echo( htmlspecialchars($echoString, ENT_QUOTES, 'UTF-8') );
 }
 
-function roll2d6() {
-        return rand(1,6) + rand(1,6);
+function roll2d6(): array {
+    $d1 = rand(1, 6);
+    $d2 = rand(1, 6);
+    return ['die1' => $d1, 'die2' => $d2, 'total' => $d1 + $d2];
 }
 
 function rolld6() {
