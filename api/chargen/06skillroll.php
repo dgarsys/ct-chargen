@@ -294,101 +294,97 @@ if ($mode !== 'cascade_fragment') {
 }
 
 ?>
+<?php // ====================================================================
+// CASCADE FRAGMENT — early output when a cascade skill is rolled.
+// Targets #roll-result (primary) + OOB swap on #skill-tables (disabled buttons).
+// ===========================================================================
+if ($mode === 'cascade_fragment'):
+    $charSkills = $charData['character']['skills'] ?? [];
+?>
 
-<?php // ---- Main working area ---- ?>
-<div class="term-working">
+<?php // Primary content → #roll-result ?>
+<p>Rolled <strong><?= $cascadeRoll ?></strong> on
+   <?= htmlspecialchars($cascadeTableName) ?>:
+   <strong><?= htmlspecialchars($cascadeParentName) ?></strong> — choose a specialisation:</p>
 
-    <h2>Term <?= $termNumber ?> — Skill Rolls</h2>
-    <p>Rolls remaining: <strong><?= $skillRollCount ?></strong> &nbsp;|&nbsp;
-       Skills: <strong><?= $currentSkillCount ?> / <?= $maxSkills ?></strong></p>
+<form hx-get="/api/chargen/skillroll"
+      hx-target="#charapp"
+      hx-swap="innerHTML"
+      hx-push-url="true">
+    <input type="hidden" name="charState"      value="<?= htmlspecialchars($newCharState) ?>" />
+    <input type="hidden" name="skillRollCount" value="<?= $skillRollCount ?>" />
+    <input type="hidden" name="termNumber"     value="<?= $termNumber ?>" />
+    <input type="hidden" name="rolledTable"    value="<?= htmlspecialchars($cascadeTableName) ?>" />
+    <input type="hidden" name="rolledRoll"     value="<?= $cascadeRoll ?>" />
+    <input type="hidden" name="rolledParent"   value="<?= $cascadeParentId ?>" />
 
-    <?php if ($resultMessage): ?>
-        <p><?= $resultMessage ?></p>
-    <?php endif; ?>
-
-    <?php // --- Cascade choice --- ?>
-    <?php if ($mode === 'cascade'): ?>
-        <?php $leaves = getLeafSkills($pdo, $cascadeParent); ?>
-        <h3>Choose a <?= htmlspecialchars($cascadeParentName) ?> specialisation</h3>
-        <p>You rolled <strong><?= $rollDetails['roll'] ?></strong> on
-           <?= htmlspecialchars($rollDetails['tableName']) ?> and gained
-           <?= htmlspecialchars($cascadeParentName) ?>. Choose a specialisation:</p>
-        <div>
-        <?php foreach ($leaves as $leaf): ?>
-            <form hx-get="/api/chargen/skillroll" hx-target="#charapp" hx-swap="innerHTML" hx-push-url="true" style="display:inline-block; margin: 0.25rem 0.25rem 0 0;">
-                <input type="hidden" name="charState"      value="<?= htmlspecialchars($newCharState) ?>" />
-                <input type="hidden" name="skillRollCount" value="<?= $skillRollCount ?>" />
-                <input type="hidden" name="termNumber"     value="<?= $termNumber ?>" />
-                <input type="hidden" name="cascadeSkill"   value="<?= (int)$leaf['id'] ?>" />
-                <input type="hidden" name="rolledTable"    value="<?= htmlspecialchars($rollDetails['tableName']) ?>" />
-                <button type="submit"><?= htmlspecialchars($leaf['skill_name']) ?></button>
-            </form>
+    <select name="cascadeSkill"
+            id="cascade-select"
+            onchange="document.getElementById('cascade-continue').disabled = (this.value === '');">
+        <option value="">-- Choose specialisation --</option>
+        <?php foreach ($cascadeLeaves as $leaf):
+            $leafId    = (int)$leaf['id'];
+            $leafLevel = $charSkills[$leafId] ?? 0;
+            $label     = htmlspecialchars($leaf['skill_name'])
+                       . ($leafLevel > 0 ? " (level $leafLevel)" : '');
+        ?>
+            <option value="<?= $leafId ?>"><?= $label ?></option>
         <?php endforeach; ?>
-        </div>
+    </select>
 
-    <?php // --- Choose table --- ?>
-    <?php elseif ($skillRollCount > 0): ?>
+    <button id="cascade-continue" type="submit" disabled>Continue</button>
+</form>
 
-        <?php if ($atMaxSkills): ?>
-            <p><em>You are at your skill maximum of <?= $maxSkills ?> (INT + EDU).
-               Only Personal Development is available — rolling a stat increase to INT or EDU
-               will raise your maximum and unlock additional skill rolls.</em></p>
-        <?php elseif ($eduVal < 8): ?>
-            <p><em>Further Advanced Education requires EDU 8+. Your current EDU is <?= $eduVal ?>.</em></p>
-        <?php endif; ?>
-
-        <table>
-            <tbody>
-            <?php foreach ($availableTables as $tableId): ?>
-                <?php
-                    $tableId = (int)$tableId;
-                    if ($atMaxSkills && $tableId !== 1) continue;
-                    $tName = $tableNames[$tableId] ?? "Table $tableId";
-                ?>
-                <tr>
-                    <td><?= htmlspecialchars($tName) ?></td>
-                    <td>
-                        <form hx-get="/api/chargen/skillroll" hx-target="#charapp" hx-swap="innerHTML" hx-push-url="true">
-                            <input type="hidden" name="charState"      value="<?= htmlspecialchars($newCharState) ?>" />
-                            <input type="hidden" name="skillRollCount" value="<?= $skillRollCount ?>" />
-                            <input type="hidden" name="termNumber"     value="<?= $termNumber ?>" />
-                            <input type="hidden" name="selectedTable"  value="<?= $tableId ?>" />
-                            <button type="submit">Roll</button>
-                        </form>
-                    </td>
-                </tr>
+<?php // OOB swap → #skill-tables with Roll buttons disabled ?>
+<div id="skill-tables" hx-swap-oob="true">
+<table>
+    <thead>
+        <tr>
+            <th>Roll</th>
+            <?php foreach ($availableTables as $tId): ?>
+                <th><?= htmlspecialchars($tableNames[(int)$tId] ?? "Table $tId") ?></th>
             <?php endforeach; ?>
-            </tbody>
-        </table>
-
-        <p><small>Personal Development may include skills as well as stat increases.</small></p>
-
-    <?php // --- All rolls done --- ?>
-    <?php else: ?>
-        <p>All skill rolls for this term are complete.</p>
-        <form hx-get="/api/chargen/term" hx-target="#charapp" hx-swap="innerHTML" hx-push-url="true">
-            <input type="hidden" name="charState" value="<?= htmlspecialchars($newCharState) ?>" />
-            <button type="submit">Continue</button>
-        </form>
-    <?php endif; ?>
-
+        </tr>
+    </thead>
+    <tbody>
+        <?php for ($roll = 1; $roll <= 6; $roll++): ?>
+        <tr>
+            <td><?= $roll ?></td>
+            <?php foreach ($availableTables as $tId):
+                $tId  = (int)$tId;
+                $row  = $tableData[$tId][$roll] ?? null;
+                $disp = $row ? htmlspecialchars(buildDisplayString($row)) : '—';
+                $isBlockedSkill = $atMaxSkills && $row && $row['skill_type'] === 'skill';
+            ?>
+                <td<?= $isBlockedSkill ? ' class="skill-blocked"' : '' ?>>
+                    <?= $disp ?><?= $isBlockedSkill ? ' *' : '' ?>
+                </td>
+            <?php endforeach; ?>
+        </tr>
+        <?php endfor; ?>
+    </tbody>
+    <tfoot>
+        <tr>
+            <td></td>
+            <?php foreach ($availableTables as $tId): ?>
+                <td><button type="button" disabled>Roll</button></td>
+            <?php endforeach; ?>
+        </tr>
+    </tfoot>
+</table>
+<?php if ($atMaxSkills): ?>
+    <p><small>* At skill maximum — these results will not apply.</small></p>
+<?php endif; ?>
 </div>
 
-<?php // ---- Charlog OOB ---- ?>
-<div id="charlog" <?= isHtmxRequest() ? 'hx-swap-oob="true"' : '' ?>>
+<?php // Charlog OOB ?>
+<div id="charlog" hx-swap-oob="true">
     <?php require $viewDir . 'charapp/charlog.php'; ?>
 </div>
 
-<?php // ---- Diagnostics ---- ?>
-<div class="diagnosticsdiv">
-    <strong>DIAGNOSTICS — Step 6: Skill Rolls</strong><br />
-    Mode: <?= $mode ?> &nbsp;
-    Rolls remaining: <?= $skillRollCount ?> &nbsp;
-    Term: <?= $termNumber ?><br />
-    Max skills: <?= $maxSkills ?> &nbsp;
-    Current: <?= $currentSkillCount ?> &nbsp;
-    At max: <?= $atMaxSkills ? 'yes' : 'no' ?><br />
-    <br />
-    charState (decoded):<br />
-    <pre><?= htmlspecialchars(json_encode($charData, JSON_PRETTY_PRINT)) ?></pre>
-</div>
+<?php
+    exit;
+endif;
+// End cascade fragment — full page render follows in Task 3
+?>
+<?php // TODO Task 3: full page render goes here ?>
