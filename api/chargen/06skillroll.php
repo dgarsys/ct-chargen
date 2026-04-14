@@ -210,15 +210,7 @@ if ($mode === 'roll') {
         $stmtCas->execute(['id' => $skillId]);
         $hasCascade = (bool)$stmtCas->fetchColumn();
 
-        if ($hasCascade) {
-            $cascadeParentId   = $skillId;
-            $cascadeParentName = $skillName;
-            $cascadeRoll       = $dieRoll;
-            $cascadeTableName  = $tableName;
-            $cascadeLeaves     = getLeafSkills($pdo, $skillId);
-            $mode              = 'cascade_fragment';
-
-        } elseif ($atMaxSkills) {
+        if ($atMaxSkills) {
             $charData['character']['log'][] = [
                 'step'       => 'skill_roll',
                 'term'       => $termNumber,
@@ -237,6 +229,14 @@ if ($mode === 'roll') {
             header('HX-Retarget: #charapp');
             header('HX-Reswap: innerHTML');
             $mode = 'page';
+
+        } elseif ($hasCascade) {
+            $cascadeParentId   = $skillId;
+            $cascadeParentName = $skillName;
+            $cascadeRoll       = $dieRoll;
+            $cascadeTableName  = $tableName;
+            $cascadeLeaves     = getLeafSkills($pdo, $skillId);
+            $mode              = 'cascade_fragment';
 
         } else {
             if (!isset($charData['character']['skills'])) $charData['character']['skills'] = [];
