@@ -9,6 +9,12 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Share+Tech+Mono&family=Open+Sans:wght@400;600&display=swap" />
     <link rel="stylesheet" href="/travellerlab.css" />
     <script src="/scripts/htmx.min.js"></script>
+    <style>
+        .skill-blocked {
+            color: #999;
+            text-decoration: line-through;
+        }
+    </style>
 </head>
 <body>
 <header>

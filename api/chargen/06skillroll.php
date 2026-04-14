@@ -387,4 +387,116 @@ if ($mode === 'cascade_fragment'):
 endif;
 // End cascade fragment — full page render follows in Task 3
 ?>
-<?php // TODO Task 3: full page render goes here ?>
+<?php // ====================================================================
+// FULL PAGE RENDER — page mode, post-roll non-cascade, post-apply_cascade
+// ===========================================================================
+?>
+<div class="term-working">
+
+    <h2>Term <?= $termNumber ?> — Skill Rolls</h2>
+
+    <div id="skill-tables">
+        <?php if ($skillRollCount <= 0): ?>
+
+            <p>All skill rolls for this term are complete.</p>
+            <form hx-get="/api/chargen/term"
+                  hx-target="#charapp"
+                  hx-swap="innerHTML"
+                  hx-push-url="true">
+                <input type="hidden" name="charState" value="<?= htmlspecialchars($newCharState) ?>" />
+                <button type="submit">Continue to Next Step</button>
+            </form>
+
+        <?php else: ?>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Roll</th>
+                    <?php foreach ($availableTables as $tId): ?>
+                        <th><?= htmlspecialchars($tableNames[(int)$tId] ?? "Table $tId") ?></th>
+                    <?php endforeach; ?>
+                </tr>
+            </thead>
+            <tbody>
+                <?php for ($roll = 1; $roll <= 6; $roll++): ?>
+                <tr>
+                    <td><?= $roll ?></td>
+                    <?php foreach ($availableTables as $tId):
+                        $tId  = (int)$tId;
+                        $row  = $tableData[$tId][$roll] ?? null;
+                        $disp = $row ? htmlspecialchars(buildDisplayString($row)) : '—';
+                        $isBlockedSkill = $atMaxSkills && $row && $row['skill_type'] === 'skill';
+                    ?>
+                        <td<?= $isBlockedSkill ? ' class="skill-blocked"' : '' ?>>
+                            <?= $disp ?><?= $isBlockedSkill ? ' *' : '' ?>
+                        </td>
+                    <?php endforeach; ?>
+                </tr>
+                <?php endfor; ?>
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td></td>
+                    <?php foreach ($availableTables as $tId):
+                        $tId = (int)$tId;
+                    ?>
+                        <td>
+                            <form hx-get="/api/chargen/skillroll"
+                                  hx-target="#roll-result"
+                                  hx-swap="innerHTML"
+                                  hx-push-url="true">
+                                <input type="hidden" name="charState"      value="<?= htmlspecialchars($newCharState) ?>" />
+                                <input type="hidden" name="skillRollCount" value="<?= $skillRollCount ?>" />
+                                <input type="hidden" name="termNumber"     value="<?= $termNumber ?>" />
+                                <input type="hidden" name="selectedTable"  value="<?= $tId ?>" />
+                                <button type="submit">Roll</button>
+                            </form>
+                        </td>
+                    <?php endforeach; ?>
+                </tr>
+            </tfoot>
+        </table>
+
+        <?php if ($atMaxSkills): ?>
+            <p><small>* At skill maximum — these results will not apply.</small></p>
+        <?php endif; ?>
+
+        <?php if (!$atMaxSkills && $eduVal < 8): ?>
+            <p><small>Further Advanced Education requires EDU 8+. Your current EDU is <?= $eduVal ?>.</small></p>
+        <?php endif; ?>
+
+        <p>Rolls remaining: <strong><?= $skillRollCount ?></strong>
+           &nbsp;|&nbsp; Skills: <strong><?= $currentSkillCount ?> / <?= $maxSkills ?></strong></p>
+
+        <?php endif; ?>
+    </div><?php // end #skill-tables ?>
+
+    <div id="roll-result">
+        <?php if ($resultMessage): ?>
+            <p><?= $resultMessage ?></p>
+        <?php endif; ?>
+    </div>
+
+</div>
+
+<?php // Charlog OOB ?>
+<div id="charlog" <?= isHtmxRequest() ? 'hx-swap-oob="true"' : '' ?>>
+    <?php require $viewDir . 'charapp/charlog.php'; ?>
+</div>
+
+<?php // Diagnostics ?>
+<div class="diagnosticsdiv">
+    <strong>DIAGNOSTICS — Step 6: Skill Rolls</strong><br />
+    Mode: <?= $mode ?> &nbsp;
+    Rolls remaining: <?= $skillRollCount ?> &nbsp;
+    Term: <?= $termNumber ?><br />
+    Max skills: <?= $maxSkills ?> &nbsp;
+    Current: <?= $currentSkillCount ?> &nbsp;
+    At max: <?= $atMaxSkills ? 'yes' : 'no' ?> &nbsp;
+    EDU: <?= $eduVal ?><br />
+    Available tables: <?= implode(', ', $availableTables) ?><br />
+    <br />
+    charState (decoded):<br />
+    <pre><?= htmlspecialchars(json_encode($charData, JSON_PRETTY_PRINT)) ?></pre>
+</div>
