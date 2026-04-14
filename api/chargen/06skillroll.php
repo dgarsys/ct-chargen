@@ -396,18 +396,6 @@ endif;
     <h2>Term <?= $termNumber ?> — Skill Rolls</h2>
 
     <div id="skill-tables">
-        <?php if ($skillRollCount <= 0): ?>
-
-            <p>All skill rolls for this term are complete.</p>
-            <form hx-get="/api/chargen/term"
-                  hx-target="#charapp"
-                  hx-swap="innerHTML"
-                  hx-push-url="true">
-                <input type="hidden" name="charState" value="<?= htmlspecialchars($newCharState) ?>" />
-                <button type="submit">Continue to Next Step</button>
-            </form>
-
-        <?php else: ?>
 
         <table>
             <thead>
@@ -449,7 +437,7 @@ endif;
                                 <input type="hidden" name="skillRollCount" value="<?= $skillRollCount ?>" />
                                 <input type="hidden" name="termNumber"     value="<?= $termNumber ?>" />
                                 <input type="hidden" name="selectedTable"  value="<?= $tId ?>" />
-                                <button type="submit">Roll</button>
+                                <button type="submit"<?= $skillRollCount <= 0 ? ' disabled' : '' ?>>Roll</button>
                             </form>
                         </td>
                     <?php endforeach; ?>
@@ -468,15 +456,23 @@ endif;
         <p>Rolls remaining: <strong><?= $skillRollCount ?></strong>
            &nbsp;|&nbsp; Skills: <strong><?= $currentSkillCount ?> / <?= $maxSkills ?></strong></p>
 
-        <?php endif; ?>
     </div><?php // end #skill-tables ?>
 
     <div id="roll-result">
         <?php // $resultMessage is set by the logic block (trusted HTML with <strong>, &rarr; etc.)
-              // It is never read from $_GET — safe to output unescaped.
-              // Suppressed when all rolls are complete to avoid stale result showing alongside the done message. ?>
-        <?php if ($resultMessage && $skillRollCount > 0): ?>
+              // It is never read from $_GET — safe to output unescaped. ?>
+        <?php if ($resultMessage): ?>
             <p><?= $resultMessage ?></p>
+        <?php endif; ?>
+        <?php if ($skillRollCount <= 0): ?>
+            <p>All skill rolls for this term are complete.</p>
+            <form hx-get="/api/chargen/reenlist"
+                  hx-target="#charapp"
+                  hx-swap="innerHTML"
+                  hx-push-url="true">
+                <input type="hidden" name="charState" value="<?= htmlspecialchars($newCharState) ?>" />
+                <button type="submit">Continue to Next Step</button>
+            </form>
         <?php endif; ?>
     </div>
 
