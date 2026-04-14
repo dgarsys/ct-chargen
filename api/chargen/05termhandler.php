@@ -73,7 +73,8 @@ if (!$survived) {
 // -----------------------------------------------------------------------
 $commAttempted   = false;
 $commissioned    = false;
-$commBase = $commTotal = $commTarget = 0;
+$commBase  = [];
+$commTotal = $commTarget = 0;
 $commMods = [];
 $newCommRankName = '';
 
@@ -124,7 +125,8 @@ if ($survived && !in_array($serviceId, $noCommission) && $currentRank === 0) {
 // -----------------------------------------------------------------------
 $promoAttempted   = false;
 $promoted         = false;
-$promoBase = $promoTotal = $promoTarget = 0;
+$promoBase  = [];
+$promoTotal = $promoTarget = 0;
 $promoMods = [];
 $newPromoRankName = '';
 $rankAfterComm    = (int)($charData['character']['rank'] ?? 0);
