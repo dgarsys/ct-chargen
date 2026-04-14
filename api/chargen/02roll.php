@@ -25,7 +25,7 @@ $charState = base64_encode(json_encode($charData));
             <td><?= htmlspecialchars($fullName) ?> (<?= htmlspecialchars(strtoupper($key)) ?>)</td>
             <td class="stat-value">
                 <?= $stats[$key]['num'] ?> (<?= htmlspecialchars($stats[$key]['hex']) ?>)
-                &nbsp;<small><?= $rollDetails[$key]['die1'] ?>, <?= $rollDetails[$key]['die2'] ?></small>
+                &nbsp;<small><?= (int)$rollDetails[$key]['die1'] ?>, <?= (int)$rollDetails[$key]['die2'] ?></small>
             </td>
         </tr>
     <?php endforeach; ?>
