@@ -22,7 +22,7 @@
         Global Functions
 
             - eecho : echo encapsulation for htmlspecialchars()
-            - roll2d6 : return random value 2-12 summing to rolls of 1d6
+            - roll2d6 : return array ['die1', 'die2', 'total'] from two 1d6 rolls
             - rolld6 : return a random value of 1-6 as if rolled on one die
             - var_echo : a wrapper to dump strings out of a var dump so we can then wrap them in a htmlspecialchars
             - generateUPP : given a charstat subarray, generates a hex-coded Traveller UPP string
