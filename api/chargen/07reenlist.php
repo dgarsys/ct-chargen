@@ -9,12 +9,13 @@ $charData  = $charState ? json_decode(base64_decode($charState), true) : [];
 $serviceId    = (int)($charData['character']['service'] ?? 0);
 $currentTerms = (int)($charData['character']['terms']   ?? 0);
 $currentAge   = (int)($charData['character']['age']     ?? 0);
-$charStats    = &$charData['character']['stats'];
-
 // Fetch career row for reEnlist target
 $stmt = $pdo->prepare('SELECT * FROM priorService WHERE draft = :id');
 $stmt->execute(['id' => $serviceId]);
 $career = $stmt->fetch();
+if (!$career) {
+    $career = ['reEnlist' => 6];
+}
 
 // -----------------------------------------------------------------------
 // Mode detection
@@ -170,7 +171,7 @@ $reEnlistTarget = (int)($career['reEnlist'] ?? 6);
 
 if ($roll['total'] === 12) {
     $outcome    = 'forced_reenlist';
-    $resultText = "Rolled 12 (6, 6) — forced re-enlistment. Reporting for another term.";
+    $resultText = "Rolled 12 ({$roll['die1']}, {$roll['die2']}) — forced re-enlistment. Reporting for another term.";
     $nextRoute  = '/api/chargen/term';
 } elseif ($intent === 'muster') {
     $outcome    = 'mustered_out';
@@ -204,7 +205,6 @@ header('HX-Retarget: #charapp');
 header('HX-Reswap: innerHTML');
 
 $atTermMax     = ($currentTerms >= 7);
-$uppAfterAging = generateUPP($charData['character']['stats']);
 
 ?>
 
