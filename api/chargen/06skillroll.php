@@ -473,8 +473,9 @@ endif;
 
     <div id="roll-result">
         <?php // $resultMessage is set by the logic block (trusted HTML with <strong>, &rarr; etc.)
-              // It is never read from $_GET — safe to output unescaped. ?>
-        <?php if ($resultMessage): ?>
+              // It is never read from $_GET — safe to output unescaped.
+              // Suppressed when all rolls are complete to avoid stale result showing alongside the done message. ?>
+        <?php if ($resultMessage && $skillRollCount > 0): ?>
             <p><?= $resultMessage ?></p>
         <?php endif; ?>
     </div>

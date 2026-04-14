@@ -57,6 +57,13 @@ $charData['character']['log'][] = [
     'result' => $survived ? 'survived' : 'killed',
 ];
 
+if (!$survived) {
+    $charData['character']['log'][] = [
+        'step'   => 'character_died',
+        'term'   => $termNumber,
+    ];
+}
+
 
 // -----------------------------------------------------------------------
 // 3. Commission check
@@ -269,7 +276,11 @@ $newCharState = base64_encode(json_encode($charData));
     </table>
 
     <?php if (!$survived): ?>
-        <p><strong>You did not survive term <?= $termNumber ?>. Character generation ends.</strong></p>
+        <p><strong>Your character did not survive term <?= $termNumber ?>.</strong></p>
+        <p>Character generation ends. Roll a new character?</p>
+        <form hx-get="/api/chargen/rollchar" hx-target="#charapp" hx-swap="innerHTML" hx-push-url="true">
+            <button type="submit">Start Over</button>
+        </form>
     <?php else: ?>
         <p>You survived term <?= $termNumber ?>.</p>
 
