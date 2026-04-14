@@ -43,7 +43,7 @@ if ($career['survPlus2Stat'] !== 'none'
     $survModTotal += 2;
 }
 
-$survTotal  = $survBase + $survModTotal;
+$survTotal  = $survBase['total'] + $survModTotal;
 $survTarget = (int)$career['survivalRoll'];
 $survived   = ($survTotal >= $survTarget);
 
@@ -51,7 +51,9 @@ $charData['character']['log'][] = [
     'step'   => 'survival',
     'term'   => $termNumber,
     'target' => $survTarget,
-    'roll'   => $survBase,
+    'die1'   => $survBase['die1'],
+    'die2'   => $survBase['die2'],
+    'roll'   => $survBase['total'],
     'mods'   => $survMods,
     'total'  => $survTotal,
     'result' => $survived ? 'survived' : 'killed',
@@ -87,7 +89,7 @@ if ($survived && !in_array($serviceId, $noCommission) && $currentRank === 0) {
         $commModTotal += 1;
     }
 
-    $commTotal  = $commBase + $commModTotal;
+    $commTotal  = $commBase['total'] + $commModTotal;
     $commTarget = (int)$career['commishRoll'];
     $commissioned = ($commTotal >= $commTarget);
 
@@ -104,7 +106,9 @@ if ($survived && !in_array($serviceId, $noCommission) && $currentRank === 0) {
         'step'   => 'commission',
         'term'   => $termNumber,
         'target' => $commTarget,
-        'roll'   => $commBase,
+        'die1'   => $commBase['die1'],
+        'die2'   => $commBase['die2'],
+        'roll'   => $commBase['total'],
         'mods'   => $commMods,
         'total'  => $commTotal,
         'result' => $commissioned ? 'commissioned' : 'not commissioned',
@@ -138,7 +142,7 @@ if ($survived && !in_array($serviceId, $noCommission)
         $promoModTotal += 1;
     }
 
-    $promoTotal  = $promoBase + $promoModTotal;
+    $promoTotal  = $promoBase['total'] + $promoModTotal;
     $promoTarget = (int)$career['promoRoll'];
     $promoted    = ($promoTotal >= $promoTarget);
 
@@ -155,7 +159,9 @@ if ($survived && !in_array($serviceId, $noCommission)
         'step'   => 'promotion',
         'term'   => $termNumber,
         'target' => $promoTarget,
-        'roll'   => $promoBase,
+        'die1'   => $promoBase['die1'],
+        'die2'   => $promoBase['die2'],
+        'roll'   => $promoBase['total'],
         'mods'   => $promoMods,
         'total'  => $promoTotal,
         'result' => $promoted ? 'promoted' : 'not promoted',
@@ -267,7 +273,7 @@ $newCharState = base64_encode(json_encode($charData));
     <table>
         <tbody>
             <tr><td>Target</td><td><?= $survTarget ?>+</td></tr>
-            <tr><td>2D6 Roll</td><td><?= $survBase ?></td></tr>
+            <tr><td>2D6 Roll</td><td><?= (int)$survBase['total'] ?> (<?= (int)$survBase['die1'] ?>, <?= (int)$survBase['die2'] ?>)</td></tr>
             <?php foreach ($survMods as $mod): ?>
                 <tr><td>DM +<?= $mod['value'] ?> (<?= htmlspecialchars($mod['reason']) ?>)</td><td>+<?= $mod['value'] ?></td></tr>
             <?php endforeach; ?>
@@ -290,7 +296,7 @@ $newCharState = base64_encode(json_encode($charData));
             <table>
                 <tbody>
                     <tr><td>Target</td><td><?= $commTarget ?>+</td></tr>
-                    <tr><td>2D6 Roll</td><td><?= $commBase ?></td></tr>
+                    <tr><td>2D6 Roll</td><td><?= (int)$commBase['total'] ?> (<?= (int)$commBase['die1'] ?>, <?= (int)$commBase['die2'] ?>)</td></tr>
                     <?php foreach ($commMods as $mod): ?>
                         <tr><td>DM +<?= $mod['value'] ?> (<?= htmlspecialchars($mod['reason']) ?>)</td><td>+<?= $mod['value'] ?></td></tr>
                     <?php endforeach; ?>
@@ -310,7 +316,7 @@ $newCharState = base64_encode(json_encode($charData));
             <table>
                 <tbody>
                     <tr><td>Target</td><td><?= $promoTarget ?>+</td></tr>
-                    <tr><td>2D6 Roll</td><td><?= $promoBase ?></td></tr>
+                    <tr><td>2D6 Roll</td><td><?= (int)$promoBase['total'] ?> (<?= (int)$promoBase['die1'] ?>, <?= (int)$promoBase['die2'] ?>)</td></tr>
                     <?php foreach ($promoMods as $mod): ?>
                         <tr><td>DM +<?= $mod['value'] ?> (<?= htmlspecialchars($mod['reason']) ?>)</td><td>+<?= $mod['value'] ?></td></tr>
                     <?php endforeach; ?>
