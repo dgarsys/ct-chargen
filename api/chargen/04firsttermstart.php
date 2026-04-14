@@ -26,7 +26,7 @@ if ($career['ePlus2Stat'] !== 'none' && ($charStats[$career['ePlus2Stat']]['num'
     $modTotal += 2;
 }
 
-$totalRoll = $baseRoll + $modTotal;
+$totalRoll = $baseRoll['total'] + $modTotal;
 $target    = (int)$career['enlistment'];
 $success   = $totalRoll >= $target;
 
@@ -53,7 +53,9 @@ $logEntry = [
     'step'          => 'enlistment',
     'attempted'     => $career['name'],
     'target'        => $target,
-    'roll'          => $baseRoll,
+    'die1'          => $baseRoll['die1'],
+    'die2'          => $baseRoll['die2'],
+    'roll'          => $baseRoll['total'],
     'mods'          => $modifiers,
     'total'         => $totalRoll,
     'result'        => $success ? 'enlisted' : 'drafted',
@@ -76,7 +78,7 @@ $newCharState = base64_encode(json_encode($charData));
     <tbody>
         <tr>
             <td>2D6 Roll</td>
-            <td><?= $baseRoll ?></td>
+            <td><?= (int)$baseRoll['total'] ?> (<?= (int)$baseRoll['die1'] ?>, <?= (int)$baseRoll['die2'] ?>)</td>
         </tr>
         <?php foreach ($modifiers as $mod): ?>
         <tr>
@@ -109,7 +111,7 @@ $newCharState = base64_encode(json_encode($charData));
 <div class="diagnosticsdiv">
     <strong>DIAGNOSTICS — Step 4: Enlistment</strong><br />
     Attempted: <?= htmlspecialchars($career['name']) ?> (target <?= $target ?>+)<br />
-    Roll: <?= $baseRoll ?> + mods <?= $modTotal ?> = <?= $totalRoll ?> — <?= $success ? 'ENLISTED' : 'FAILED' ?><br />
+    Roll: <?= (int)$baseRoll['total'] ?> (<?= (int)$baseRoll['die1'] ?>, <?= (int)$baseRoll['die2'] ?>) + mods <?= $modTotal ?> = <?= $totalRoll ?> — <?= $success ? 'ENLISTED' : 'FAILED' ?><br />
     <?php if (!$success): ?>
         Draft roll: <?= $draftRoll ?> → <?= htmlspecialchars($draftedCareer['name'] ?? '') ?><br />
     <?php endif; ?>
