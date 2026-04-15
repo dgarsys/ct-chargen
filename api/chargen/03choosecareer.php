@@ -31,8 +31,8 @@ foreach ($careers as $career) {
 ?>
 
 <h2>Choose a Career</h2>
-<p>UPP: <strong><?= htmlspecialchars(generateUPP($charStats)) ?></strong></p>
 <p>Select a career to attempt enlistment. The enlistment throw is the minimum roll on 2D6 required to join. Positive DMs apply if your stat meets or exceeds the listed value.</p>
+<p>UPP: <strong><?= htmlspecialchars(generateUPP($charStats)) ?></strong></p>
 
 <table>
     <thead>
@@ -60,14 +60,14 @@ foreach ($careers as $career) {
             <td>Enlist DM +1</td>
             <?php foreach ($careers as $career): ?>
                 <?php $met = charMeetsBonus($charStats, $career['ePlus1Stat'], (int)$career['ePus1Val']); ?>
-                <td<?= $met ? ' style="color:#3a7d3a"' : '' ?>><?= $career['ePlus1Disp'] !== 'None' ? htmlspecialchars($career['ePlus1Disp']).' '.(int)$career['ePus1Val'].'+' : '—' ?></td>
+                <td<?= $met ? ' class="bonus-met"' : '' ?>><?= $career['ePlus1Disp'] !== 'None' ? htmlspecialchars($career['ePlus1Disp']).' '.(int)$career['ePus1Val'].'+' : '—' ?></td>
             <?php endforeach; ?>
         </tr>
         <tr>
             <td>Enlist DM +2</td>
             <?php foreach ($careers as $career): ?>
                 <?php $met = charMeetsBonus($charStats, $career['ePlus2Stat'], (int)$career['ePlus2Val']); ?>
-                <td<?= $met ? ' style="color:#3a7d3a"' : '' ?>><?= $career['ePlus2Disp'] !== 'None' ? htmlspecialchars($career['ePlus2Disp']).' '.(int)$career['ePlus2Val'].'+' : '—' ?></td>
+                <td<?= $met ? ' class="bonus-met"' : '' ?>><?= $career['ePlus2Disp'] !== 'None' ? htmlspecialchars($career['ePlus2Disp']).' '.(int)$career['ePlus2Val'].'+' : '—' ?></td>
             <?php endforeach; ?>
         </tr>
         <tr>
@@ -80,7 +80,7 @@ foreach ($careers as $career) {
             <td>Survival DM +2</td>
             <?php foreach ($careers as $career): ?>
                 <?php $met = charMeetsBonus($charStats, $career['survPlus2Stat'], (int)$career['survPlus2Val']); ?>
-                <td<?= $met ? ' style="color:#3a7d3a"' : '' ?>><?= $career['survPlus2Dis'] !== 'None' ? htmlspecialchars($career['survPlus2Dis']).' '.(int)$career['survPlus2Val'].'+' : '—' ?></td>
+                <td<?= $met ? ' class="bonus-met"' : '' ?>><?= $career['survPlus2Dis'] !== 'None' ? htmlspecialchars($career['survPlus2Dis']).' '.(int)$career['survPlus2Val'].'+' : '—' ?></td>
             <?php endforeach; ?>
         </tr>
         <tr>
@@ -93,7 +93,7 @@ foreach ($careers as $career) {
             <td>Commission DM +1</td>
             <?php foreach ($careers as $career): ?>
                 <?php $met = (int)$career['commishRoll'] > 0 && charMeetsBonus($charStats, $career['commish1stat'], (int)$career['commish1Val']); ?>
-                <td<?= $met ? ' style="color:#3a7d3a"' : '' ?>><?= (int)$career['commishRoll'] > 0 && $career['commish1Disp'] !== 'None' ? htmlspecialchars($career['commish1Disp']).' '.(int)$career['commish1Val'].'+' : '—' ?></td>
+                <td<?= $met ? ' class="bonus-met"' : '' ?>><?= (int)$career['commishRoll'] > 0 && $career['commish1Disp'] !== 'None' ? htmlspecialchars($career['commish1Disp']).' '.(int)$career['commish1Val'].'+' : '—' ?></td>
             <?php endforeach; ?>
         </tr>
         <tr>
@@ -106,7 +106,7 @@ foreach ($careers as $career) {
             <td>Promotion DM +1</td>
             <?php foreach ($careers as $career): ?>
                 <?php $met = (int)$career['promoRoll'] > 0 && charMeetsBonus($charStats, $career['pro1Stat'], (int)$career['pro1Val']); ?>
-                <td<?= $met ? ' style="color:#3a7d3a"' : '' ?>><?= (int)$career['promoRoll'] > 0 && $career['pro1Disp'] !== 'None' ? htmlspecialchars($career['pro1Disp']).' '.(int)$career['pro1Val'].'+' : '—' ?></td>
+                <td<?= $met ? ' class="bonus-met"' : '' ?>><?= (int)$career['promoRoll'] > 0 && $career['pro1Disp'] !== 'None' ? htmlspecialchars($career['pro1Disp']).' '.(int)$career['pro1Val'].'+' : '—' ?></td>
             <?php endforeach; ?>
         </tr>
         <tr>
