@@ -44,15 +44,77 @@ $statDefs = [
 */
 $agingTable = [
     // stub — user to populate with full CT rulebook values
+    // "target" is the value to be rolled on 2d6 or higher to avoid aging effects
+    // "penalty" is the amount the stat is dropped if the target is not met. 
+
+    // Aging Crisis: If, as a result of aging, a characteristic is
+    // reduced to zero, the character is considered to have had an
+    // aging crisis and become quite ill. A basic saving throw of 8 +
+    // applies to avoid death  The characteristic which was reduced to 
+    // zero automatically becomes 1. 
+
     34 => [
-        ['stat' => 'str', 'target' => 8],
-        ['stat' => 'dex', 'target' => 7],
-        ['stat' => 'end', 'target' => 8],
+        ['stat' => 'str', 'target' => 8, 'penalty' => -1],
+        ['stat' => 'dex', 'target' => 7, 'penalty' => -1],
+        ['stat' => 'end', 'target' => 8, 'penalty' => -1],
     ],
     38 => [
-        ['stat' => 'str', 'target' => 7],
-        ['stat' => 'dex', 'target' => 7],
-        ['stat' => 'end', 'target' => 7],
-        ['stat' => 'int', 'target' => 8],
+        ['stat' => 'str', 'target' => 8, 'penalty' => -1],
+        ['stat' => 'dex', 'target' => 7, 'penalty' => -1],
+        ['stat' => 'end', 'target' => 8, 'penalty' => -1],
+    ],
+    42 => [
+        ['stat' => 'str', 'target' => 8, 'penalty' => -1],
+        ['stat' => 'dex', 'target' => 7, 'penalty' => -1],
+        ['stat' => 'end', 'target' => 8, 'penalty' => -1],
+    ],
+    46=> [
+        ['stat' => 'str', 'target' => 8, 'penalty' => -1],
+        ['stat' => 'dex', 'target' => 7, 'penalty' => -1],
+        ['stat' => 'end', 'target' => 8, 'penalty' => -1],
+    ],
+    50 => [
+        ['stat' => 'str', 'target' => 9, 'penalty' => -1],
+        ['stat' => 'dex', 'target' => 8, 'penalty' => -1],
+        ['stat' => 'end', 'target' => 9, 'penalty' => -1],
+    ],
+    54 => [
+        ['stat' => 'str', 'target' => 9, 'penalty' => -1],
+        ['stat' => 'dex', 'target' => 8, 'penalty' => -1],
+        ['stat' => 'end', 'target' => 9, 'penalty' => -1],
+    ],
+    58 => [
+        ['stat' => 'str', 'target' => 9, 'penalty' => -1],
+        ['stat' => 'dex', 'target' => 8, 'penalty' => -1],
+        ['stat' => 'end', 'target' => 9, 'penalty' => -1],
+    ],
+    62 => [
+        ['stat' => 'str', 'target' => 9, 'penalty' => -1],
+        ['stat' => 'dex', 'target' => 8, 'penalty' => -1],
+        ['stat' => 'end', 'target' => 9, 'penalty' => -1],
+    ],
+    66 => [
+        ['stat' => 'str', 'target' => 9, 'penalty' => -2],
+        ['stat' => 'dex', 'target' => 9, 'penalty' => -2],
+        ['stat' => 'end', 'target' => 9, 'penalty' => -2],
+        ['stat' => 'int', 'target' => 9, 'penalty' => -1],
+    ],
+    70 => [
+        ['stat' => 'str', 'target' => 9, 'penalty' => -2],
+        ['stat' => 'dex', 'target' => 9, 'penalty' => -2],
+        ['stat' => 'end', 'target' => 9, 'penalty' => -2],
+        ['stat' => 'int', 'target' => 9, 'penalty' => -1],
+    ],
+    74 => [
+        ['stat' => 'str', 'target' => 9, 'penalty' => -2],
+        ['stat' => 'dex', 'target' => 9, 'penalty' => -2],
+        ['stat' => 'end', 'target' => 9, 'penalty' => -2],
+        ['stat' => 'int', 'target' => 9, 'penalty' => -1],
+    ],
+    78 => [
+        ['stat' => 'str', 'target' => 9, 'penalty' => -2],
+        ['stat' => 'dex', 'target' => 9, 'penalty' => -2],
+        ['stat' => 'end', 'target' => 9, 'penalty' => -2],
+        ['stat' => 'int', 'target' => 9, 'penalty' => -1],
     ],
 ];
