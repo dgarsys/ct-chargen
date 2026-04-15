@@ -28,15 +28,14 @@ $mode   = $intent !== '' ? 'roll' : 'page';
 // -----------------------------------------------------------------------
 if ($mode === 'page') {
 
-    // Read and clear any result message from previous action
-    $resultMessage = $charData['_lastResult'] ?? '';
-    unset($charData['_lastResult']);
-
     // -- Aging rolls --
     $agingRolls     = [];
     $anyStatReduced = false;
 
-    if (isset($agingTable[$currentAge])) {
+    $agingAlreadyApplied = isset($charData['character']['agingAppliedAge'])
+        && $charData['character']['agingAppliedAge'] === $currentAge;
+
+    if (!$agingAlreadyApplied && isset($agingTable[$currentAge])) {
         foreach ($agingTable[$currentAge] as $entry) {
             $statKey = $entry['stat'];
             $target  = (int)$entry['target'];
@@ -62,6 +61,8 @@ if ($mode === 'page') {
 
             $agingRolls[] = $agingRollEntry;
         }
+
+        $charData['character']['agingAppliedAge'] = $currentAge;
 
         $charData['character']['log'][] = [
             'step'  => 'aging',
@@ -132,11 +133,7 @@ if ($mode === 'page') {
             <p><em>Maximum terms reached — re-enlistment not available.</em></p>
         <?php endif; ?>
 
-        <div id="roll-result">
-            <?php if ($resultMessage): ?>
-                <p><?= $resultMessage ?></p>
-            <?php endif; ?>
-        </div>
+        <div id="roll-result"></div>
 
     </div>
 
