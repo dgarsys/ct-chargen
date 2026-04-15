@@ -109,6 +109,24 @@ if (!empty($logSkills)) {
                 <?php endforeach; ?><br />
             <?php endif; ?>
 
+        <?php elseif ($entry['step'] === 'commission'): ?>
+            Term <?= (int)$entry['term'] ?> commission
+            (rolled <?= (int)$entry['total'] ?>, target <?= (int)$entry['target'] ?>+):
+            <?php if ($entry['result'] === 'commissioned'): ?>
+                <strong>Commissioned — <?= htmlspecialchars($entry['new_rank'] ?? 'Officer') ?>.</strong><br />
+            <?php else: ?>
+                Not commissioned.<br />
+            <?php endif; ?>
+
+        <?php elseif ($entry['step'] === 'promotion'): ?>
+            Term <?= (int)$entry['term'] ?> promotion
+            (rolled <?= (int)$entry['total'] ?>, target <?= (int)$entry['target'] ?>+):
+            <?php if ($entry['result'] === 'promoted'): ?>
+                <strong>Promoted — <?= htmlspecialchars($entry['new_rank'] ?? 'Rank up') ?>.</strong><br />
+            <?php else: ?>
+                Not promoted.<br />
+            <?php endif; ?>
+
         <?php elseif ($entry['step'] === 'reenlistment'): ?>
             <?php
                 $reenlistLabels = [
