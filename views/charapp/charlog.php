@@ -94,14 +94,18 @@ if (!empty($logSkills)) {
 
         <?php elseif ($entry['step'] === 'aging'): ?>
             <?php
-                $reducedStats = array_filter($entry['rolls'] ?? [], fn($r) => $r['result'] === 'reduced');
+                $reducedStats = array_filter($entry['rolls'] ?? [], fn($r) => in_array($r['result'], ['reduced', 'crisis_survived', 'crisis_died']));
             ?>
             <?php if (empty($reducedStats)): ?>
                 Age <?= (int)$entry['age'] ?>: No aging effects.<br />
             <?php else: ?>
                 Age <?= (int)$entry['age'] ?> aging:
                 <?php foreach ($reducedStats as $ar): ?>
-                    <?= htmlspecialchars(strtoupper($ar['stat'])) ?> reduced to <?= (int)$ar['new_val'] ?>.
+                    <?php if ($ar['crisis'] ?? false): ?>
+                        <?= htmlspecialchars(strtoupper($ar['stat'])) ?> CRISIS (<?= $ar['crisis_survived'] ? 'survived' : 'DIED' ?>, set to 1).
+                    <?php else: ?>
+                        <?= htmlspecialchars(strtoupper($ar['stat'])) ?> reduced to <?= (int)$ar['new_val'] ?>.
+                    <?php endif; ?>
                 <?php endforeach; ?><br />
             <?php endif; ?>
 

@@ -29,6 +29,7 @@ $mode   = $intent !== '' ? 'roll' : 'page';
 if ($mode === 'page') {
 
     // -- Aging rolls --
+    $characterDiedFromAging = false;
     $agingRolls     = [];
     $anyStatReduced = false;
 
@@ -52,10 +53,33 @@ if ($mode === 'page') {
             ];
 
             if ($reduced) {
-                $newVal = max(1, $charData['character']['stats'][$statKey]['num'] - 1);
-                $charData['character']['stats'][$statKey]['num'] = $newVal;
-                $charData['character']['stats'][$statKey]['hex'] = strtoupper(dechex($newVal));
-                $agingRollEntry['new_val'] = $newVal;
+                $penalty   = (int)$entry['penalty'];
+                $rawNewVal = $charData['character']['stats'][$statKey]['num'] + $penalty;
+
+                if ($rawNewVal <= 0) {
+                    // Aging crisis — stat would drop to 0 or below
+                    $crisisRoll = roll2d6();
+                    $crisisSurvived = $crisisRoll['total'] >= 8;
+
+                    $charData['character']['stats'][$statKey]['num'] = 1;
+                    $charData['character']['stats'][$statKey]['hex'] = '1';
+
+                    $agingRollEntry['new_val']         = 1;
+                    $agingRollEntry['crisis']          = true;
+                    $agingRollEntry['crisis_die1']     = $crisisRoll['die1'];
+                    $agingRollEntry['crisis_die2']     = $crisisRoll['die2'];
+                    $agingRollEntry['crisis_total']    = $crisisRoll['total'];
+                    $agingRollEntry['crisis_survived'] = $crisisSurvived;
+                    $agingRollEntry['result']          = $crisisSurvived ? 'crisis_survived' : 'crisis_died';
+
+                    if (!$crisisSurvived) {
+                        $characterDiedFromAging = true;
+                    }
+                } else {
+                    $charData['character']['stats'][$statKey]['num'] = $rawNewVal;
+                    $charData['character']['stats'][$statKey]['hex'] = strtoupper(dechex($rawNewVal));
+                    $agingRollEntry['new_val'] = $rawNewVal;
+                }
                 $anyStatReduced = true;
             }
 
@@ -63,6 +87,14 @@ if ($mode === 'page') {
         }
 
         $charData['character']['agingAppliedAge'] = $currentAge;
+
+        if ($characterDiedFromAging) {
+            $charData['character']['log'][] = [
+                'step'  => 'character_died',
+                'cause' => 'aging_crisis',
+                'age'   => $currentAge,
+            ];
+        }
 
         $charData['character']['log'][] = [
             'step'  => 'aging',
@@ -96,9 +128,19 @@ if ($mode === 'page') {
                         <td><?= (int)$ar['total'] ?> (<?= (int)$ar['die1'] ?>, <?= (int)$ar['die2'] ?>)</td>
                         <td><?= htmlspecialchars(strtoupper($ar['stat'])) ?></td>
                         <td><?= (int)$ar['target'] ?>+</td>
-                        <td><?= $ar['result'] === 'reduced'
-                                ? '<strong>Reduced to ' . (int)$ar['new_val'] . '</strong>'
-                                : 'No effect' ?></td>
+                        <td>
+                            <?php if ($ar['crisis'] ?? false): ?>
+                                <strong>AGING CRISIS —
+                                    <?= $ar['crisis_survived'] ? 'Survived' : 'DIED' ?>
+                                    (save: <?= (int)$ar['crisis_total'] ?> (<?= (int)$ar['crisis_die1'] ?>, <?= (int)$ar['crisis_die2'] ?>), needed 8+)
+                                    — <?= htmlspecialchars(strtoupper($ar['stat'])) ?> set to 1
+                                </strong>
+                            <?php elseif ($ar['result'] === 'reduced'): ?>
+                                <strong>Reduced to <?= (int)$ar['new_val'] ?></strong>
+                            <?php else: ?>
+                                No effect
+                            <?php endif; ?>
+                        </td>
                     </tr>
                 <?php endforeach; ?>
                 </tbody>
@@ -108,32 +150,41 @@ if ($mode === 'page') {
             <?php endif; ?>
         <?php endif; ?>
 
-        <?php // --- Intent buttons --- ?>
-        <h3>What would you like to do?</h3>
+        <?php if ($characterDiedFromAging): ?>
+            <p><strong>Your character has died from an aging crisis.</strong></p>
+            <p>Character generation ends.</p>
+            <form hx-get="/api/chargen/rollchar" hx-target="#charapp" hx-swap="innerHTML" hx-push-url="true">
+                <button type="submit">Start Over</button>
+            </form>
+            <div id="roll-result"></div>
+        <?php else: ?>
+            <?php // --- Intent buttons --- ?>
+            <h3>What would you like to do?</h3>
 
-        <?php if (!$atTermMax): ?>
-        <form hx-get="/api/chargen/reenlist"
-              hx-target="#roll-result"
-              hx-swap="innerHTML">
-            <input type="hidden" name="charState" value="<?= htmlspecialchars($newCharState) ?>" />
-            <input type="hidden" name="intent"    value="reenlist" />
-            <button type="submit">Try to Re-enlist</button>
-        </form>
+            <?php if (!$atTermMax): ?>
+            <form hx-get="/api/chargen/reenlist"
+                  hx-target="#roll-result"
+                  hx-swap="innerHTML">
+                <input type="hidden" name="charState" value="<?= htmlspecialchars($newCharState) ?>" />
+                <input type="hidden" name="intent"    value="reenlist" />
+                <button type="submit">Try to Re-enlist</button>
+            </form>
+            <?php endif; ?>
+
+            <form hx-get="/api/chargen/reenlist"
+                  hx-target="#roll-result"
+                  hx-swap="innerHTML">
+                <input type="hidden" name="charState" value="<?= htmlspecialchars($newCharState) ?>" />
+                <input type="hidden" name="intent"    value="muster" />
+                <button type="submit">Muster Out</button>
+            </form>
+
+            <?php if ($atTermMax): ?>
+                <p><em>Maximum terms reached — re-enlistment not available.</em></p>
+            <?php endif; ?>
+
+            <div id="roll-result"></div>
         <?php endif; ?>
-
-        <form hx-get="/api/chargen/reenlist"
-              hx-target="#roll-result"
-              hx-swap="innerHTML">
-            <input type="hidden" name="charState" value="<?= htmlspecialchars($newCharState) ?>" />
-            <input type="hidden" name="intent"    value="muster" />
-            <button type="submit">Muster Out</button>
-        </form>
-
-        <?php if ($atTermMax): ?>
-            <p><em>Maximum terms reached — re-enlistment not available.</em></p>
-        <?php endif; ?>
-
-        <div id="roll-result"></div>
 
     </div>
 
