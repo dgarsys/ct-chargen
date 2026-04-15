@@ -113,11 +113,11 @@ if (!empty($logSkills)) {
                     'mustered_out'   => 'Mustered out.',
                     'failed_reenlist'=> 'Failed re-enlistment — mustered out.',
                 ];
-                $label = $reenlistLabels[$entry['result']] ?? htmlspecialchars($entry['result']);
+                $label = $reenlistLabels[$entry['result']] ?? $entry['result'];
             ?>
             Term <?= (int)$entry['term'] ?> re-enlistment
             (rolled <?= (int)$entry['total'] ?>, target <?= (int)$entry['target'] ?>+):
-            <strong><?= $label ?></strong><br />
+            <strong><?= htmlspecialchars($label) ?></strong><br />
 
         <?php endif; ?>
 
